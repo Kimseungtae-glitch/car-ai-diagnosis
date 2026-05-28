@@ -15,15 +15,16 @@ missing_files = [f for f in required_files if not os.path.exists(f)]
 if missing_files:
     st.error(f"⚠️ 서버에 필수 AI 파일이 누락되었습니다: {', '.join(missing_files)}")
 else:
-    # 파일들을 텍스트와 바이너리 형태로 브라우저에 직접 주입하여 보안(CORS) 벽을 허무는 정석 코드
+    # 에러가 나지 않도록 f-string 포맷팅을 분리하여 안전하게 파일 주입
     with open("model.json", "r", encoding="utf-8") as f:
         model_json = f.read()
     with open("metadata.json", "r", encoding="utf-8") as f:
         metadata_json = f.read()
     with open("weights.bin", "rb") as f:
-        weights_bin = f.read().hex()  # 바이너리 파일을 안전하게 넘기기 위해 hex로 변환
+        weights_bin = f.read().hex()
 
-    html_code = f"""
+    # 자바스크립트 중괄호 에러를 방지하기 위해 특수 처리된 HTML 스트링
+    html_code = """
     <div style="font-family: 'Malgun Gothic', sans-serif; padding: 20px; border: 2px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
         <h4 style="margin-top:0; color: #1a202c; font-size: 18px; border-bottom: 2px solid #edf2f7; padding-bottom: 10px;">🤖 AI 외관 손상 진단창 (정석 구동)</h4>
         
@@ -51,42 +52,41 @@ else:
         const imageSelector = document.getElementById('image-selector');
         const resultDiv = document.getElementById('result-container');
 
-        // 서버가 가져온 파일 데이터를 메모리에 직접 태워 보안 에러를 원천 차단합니다.
-        async function initAI() {{
-            try {{
-                const modelJsonData = {model_json};
-                const metadataJsonData = {metadata_json};
-                
-                // hex 데이터를 다시 바이너리(ArrayBuffer)로 복원
-                const weightsHex = "{weights_bin}";
-                const weightsBuffer = new Uint8Array(weightsHex.match(/.{{1,2}}/g).map(byte => parseInt(byte, 16))).buffer;
+        // 파이썬 영역에서 변환되어 주입되는 데이터 스트링 파싱
+        const modelJsonData = _MODEL_JSON_;
+        const metadataJsonData = _METADATA_JSON_;
+        const weightsHex = "_WEIGHTS_BIN_";
 
-                // 구글 서버 통신 없이 브라우저 메모리 내부에서 직접 뇌를 구성
+        async function initAI() {
+            try {
+                // hex 데이터를 다시 바이너리(ArrayBuffer)로 복원하여 브라우저 메모리에 탑재
+                const weightsBuffer = new Uint8Array(weightsHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16))).buffer;
+
                 model = await tmImage.loadFromFiles(
-                    new File([JSON.stringify(modelJsonData)], "model.json", {{type: "application/json"}}),
-                    new File([weightsBuffer], "weights.bin", {{type: "application/octet-stream"}}),
-                    new File([JSON.stringify(metadataJsonData)], "metadata.json", {{type: "application/json"}})
+                    new File([JSON.stringify(modelJsonData)], "model.json", {type: "application/json"}),
+                    new File([weightsBuffer], "weights.bin", {type: "application/octet-stream"}),
+                    new File([JSON.stringify(metadataJsonData)], "metadata.json", {type: "application/json"})
                 );
                 
                 maxPredictions = model.getTotalClasses();
                 statusMsg.innerHTML = "🚀 AI 정석 모델 로딩 완료! 진짜 딥러닝 연산이 가능합니다.";
                 statusMsg.style.backgroundColor = "#f0fff4";
                 statusMsg.style.color = "#22543d";
-            } catch (error) {{
+            } catch (error) {
                 statusMsg.innerHTML = "❌ AI 모델 파일 로드 실패: " + error.message;
                 statusMsg.style.backgroundColor = "#fff5f5";
                 statusMsg.style.color = "#c53030";
-            }}
-        }}
+            }
+        }
         
         initAI();
 
-        imageSelector.addEventListener('change', function(event) {{
+        imageSelector.addEventListener('change', function(event) {
             const file = event.target.files[0];
             if (!file) return;
 
             const reader = new FileReader();
-            reader.onload = function(e) {{
+            reader.onload = function(e) {
                 const img = document.getElementById('selected-image');
                 img.src = e.target.result;
                 img.style.display = 'block';
@@ -97,8 +97,7 @@ else:
                 statusMsg.style.color = "#dd6b20";
                 resultDiv.style.display = 'none';
                 
-                img.onload = async function() {{
-                    // 진짜 티처블머신 뇌가 사진을 보고 분석하는 함수
+                img.onload = async function() {
                     const prediction = await model.predict(img);
                     statusMsg.style.display = 'none';
                     
@@ -106,36 +105,41 @@ else:
                     let highestProbability = 0;
                     let allResultsHTML = "<hr style='border:0; border-top:1px solid #cbd5e0; margin:12px 0;'><strong>🔍 AI 모델 내부 연산 데이터 (실시간):</strong><br><div style='font-weight: normal; font-size:14px; margin-top:5px; color:#4a5568;'>";
                     
-                    for (let i = 0; i < maxPredictions; i++) {{
+                    for (let i = 0; i < maxPredictions; i++) {
                         const prob = prediction[i].probability;
                         const className = prediction[i].className;
                         allResultsHTML += `• ${className} 가중치 확률: <strong>${(prob * 100).toFixed(1)}%</strong><br>`;
-                        if (prob > highestProbability) {{
+                        if (prob > highestProbability) {
                             highestProbability = prob;
                             highestClass = className;
-                        }}
-                    }}
+                        }
+                    }
                     allResultsHTML += "</div>";
 
                     resultDiv.style.display = 'block';
                     const scorePercent = (highestProbability * 100).toFixed(1);
 
-                    // 클래스 이름에 따라 색상 분기
-                    if (highestClass.includes('파손') || highestClass.toLowerCase().includes('damage') || highestClass.toLowerCase().includes('scratch')) {{
+                    if (highestClass.includes('파손') || highestClass.toLowerCase().includes('damage') || highestClass.toLowerCase().includes('scratch')) {
                         resultDiv.style.backgroundColor = '#fff5f5';
                         resultDiv.style.color = '#c53030';
                         resultDiv.style.border = '1px solid #fed7d7';
                         resultDiv.innerHTML = `🚨 AI 실시간 분석: [${highestClass}] 상태 감지 (${scorePercent}%)` + allResultsHTML;
-                    } else {{
+                    } else {
                         resultDiv.style.backgroundColor = '#f0fff4';
                         resultDiv.style.color = '#22543d';
                         resultDiv.style.border = '1px solid #c6f6d5';
                         resultDiv.innerHTML = `✅ AI 실시간 분석: [${highestClass}] 상태 인증 (${scorePercent}%)` + allResultsHTML;
-                    }}
-                }};
-            }};
+                    }
+                };
+            };
             reader.readAsDataURL(file);
-        }});
+        });
     </script>
     """
+    
+    # 파이썬 데이터를 자바스크립트 위치에 안전하게 치환하여 문법 에러 원천 봉쇄
+    html_code = html_code.replace("_MODEL_JSON_", model_json)
+    html_code = html_code.replace("_METADATA_JSON_", metadata_json)
+    html_code = html_code.replace("_WEIGHTS_BIN_", weights_bin)
+    
     components.html(html_code, height=650, scrolling=True)
