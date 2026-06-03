@@ -10,108 +10,98 @@ st.markdown("""
     <style>
     .main .block-container { padding-top: 1rem; padding-bottom: 2rem; }
     h1 { color: #1e293b; font-weight: 800; letter-spacing: -0.05em; }
+    div.stButton > button {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%) !important;
+        color: #000000 !important;
+        font-weight: bold !important;
+        font-size: 14px !important;
+        box-shadow: 0 4px 6px -1px rgba(251,191,36,0.3);
+        transition: 0.3s;
+    }
+    div.stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px -1px rgba(251,191,36,0.5);
+    }
     </style>
 """, unsafe_allow_html=True)
 
-# 스트림릿 자체 메모리에 로그인 상태(시동 상태) 저장용 변수 초기화
+# 스트림릿 자체 메모리에 로그인 상태 저장용 변수 초기화
 if "car_authenticated" not in st.session_state:
     st.session_state.car_authenticated = False
 
-# 쿼리 스트링(URL 파라미터)을 통해 자바스크립트로부터 로그인 신호 수신
-query_params = st.query_params
-if "auth" in query_params and query_params["auth"] == "success":
-    st.session_state.car_authenticated = True
 
 # ==========================================
-# STEP 1. 자동차 시동 & V2X 로그인 구역 (첫 화면)
+# [화면 1] 로그인 및 인증 전 화면
 # ==========================================
-car_lamp_html = """
-<div style="font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; background-color: #0f1115; padding: 35px 25px; border-radius: 16px; margin-bottom: 25px; box-shadow: inset 0 0 20px rgba(0,0,0,0.6);">
-    <div style="display: flex; align-items: center; gap: 35px; position: relative; max-width: 550px; width: 100%; flex-wrap: wrap; justify-content: center;">
-        
-        <div id="carGroup" onclick="toggleCarLight()" style="position: relative; width: 160px; height: 90px; cursor: pointer; z-index: 10; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-            <div id="leftGlow" style="position: absolute; top: 15px; left: -140px; width: 180px; height: 100px; background: radial-gradient(ellipse at right, rgba(251,191,36,0.3) 0%, rgba(251,191,36,0) 80%); transform: perspective(200px) rotateY(-30deg); opacity: 0; pointer-events: none; transition: 0.4s; filter: blur(5px);"></div>
-            <div id="rightGlow" style="position: absolute; top: 15px; right: -140px; width: 180px; height: 100px; background: radial-gradient(ellipse at left, rgba(251,191,36,0.3) 0%, rgba(251,191,36,0) 80%); transform: perspective(200px) rotateY(30deg); opacity: 0; pointer-events: none; transition: 0.4s; filter: blur(5px);"></div>
-            
-            <div style="position: relative; width: 140px; height: 50px; background: linear-gradient(180deg, #334155 0%, #1e293b 100%); border-radius: 20px 20px 12px 12px; border: 1px solid #475569;">
-                <div style="width: 100px; height: 16px; background: #0f172a; margin: 6px auto 0 auto; border-radius: 8px 8px 3px 3px; opacity: 0.8; border-bottom: 1px solid #334155;"></div>
-                <div id="lightL" style="position: absolute; bottom: 10px; left: 10px; width: 22px; height: 8px; background: #64748b; border-radius: 2px 6px 3px 3px; transition: 0.3s;"></div>
-                <div id="lightR" style="position: absolute; bottom: 10px; right: 10px; width: 22px; height: 8px; background: #64748b; border-radius: 6px 2px 3px 3px; transition: 0.3s;"></div>
-                <div style="width: 50px; height: 4px; background: #1e293b; margin: 8px auto 0 auto; border-radius: 2px; border: 1px solid #334155;"></div>
+if not st.session_state.car_authenticated:
+    
+    # 세련된 미래형 자동차 전면부 디자인 비주얼 (HTML/CSS)
+    car_visual_html = """
+    <div style="font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; background-color: #0f1115; padding: 40px 25px; border-radius: 16px; box-shadow: inset 0 0 20px rgba(0,0,0,0.6); margin-bottom: 10px;">
+        <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; width: 160px; height: 100px;">
+            <div style="position: relative; width: 140px; height: 55px; background: linear-gradient(180deg, #334155 0%, #1e293b 100%); border-radius: 20px 20px 12px 12px; border: 1px solid #475569;">
+                <div style="width: 100px; height: 18px; background: #0f172a; margin: 6px auto 0 auto; border-radius: 8px 8px 3px 3px; opacity: 0.8;"></div>
+                <div style="position: absolute; bottom: 12px; left: 12px; width: 22px; height: 8px; background: #64748b; border-radius: 2px 6px 3px 3px;"></div>
+                <div style="position: absolute; bottom: 12px; right: 12px; width: 22px; height: 8px; background: #64748b; border-radius: 6px 2px 3px 3px;"></div>
+                <div style="width: 50px; height: 4px; background: #1e293b; margin: 8px auto 0 auto; border-radius: 2px;"></div>
             </div>
             <div style="display: flex; justify-content: space-between; width: 110px; margin-top: -2px;">
                 <div style="width: 20px; height: 8px; background: #0f172a; border-radius: 2px;"></div>
                 <div style="width: 20px; height: 8px; background: #0f172a; border-radius: 2px;"></div>
             </div>
-            <span id="clickHint" style="color: #64748b; font-size: 10px; margin-top: 8px; font-weight: 600; letter-spacing: -0.03em;">👆 차량을 클릭하여 시동 켜기</span>
-        </div>
-        
-        <div id="loginForm" style="background: rgba(255,255,255,0.02); backdrop-filter: blur(15px); padding: 18px 22px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.06); width: 260px; color: white; opacity: 0.2; transition: all 0.5s; box-sizing: border-box;">
-            <h3 style="text-align: center; margin-top: 0; margin-bottom: 12px; font-weight: 600; font-size: 15px; color: #64748b;" id="welcomeText">🔒 자율주행 V2X 인증</h3>
-            <div style="margin-bottom: 10px;">
-                <label style="display: block; font-size: 11px; color: #64748b; margin-bottom: 4px;">Connected Car ID</label>
-                <input type="text" placeholder="Future_Auto_SeungTae" disabled style="width: 100%; padding: 8px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: #64748b; font-size: 12px; box-sizing: border-box;">
-            </div>
-            <button style="width: 100%; padding: 10px; border: none; border-radius: 6px; background: linear-gradient(135deg, #475569 0%, #334155 100%); color: #94a3b8; font-weight: bold; font-size: 12px;" id="loginBtn">시동을 켜서 검수를 시작하세요</button>
         </div>
     </div>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-<script>
-    // 스트림릿 서버에 이미 인증 완료 상태로 찍혀있다면 화면 동기화
-    const isAlreadyAuth = _ALREADY_AUTH_;
-    if (isAlreadyAuth) {
-        setTimeout(() => triggerUIAffect(true), 100);
-    }
-
-    function toggleCarLight() {
-        if (isAlreadyAuth) return; // 이미 인증됐다면 중복 클릭 방지
-        gsap.to("#carGroup", {y: -4, duration: 0.1, yoyo: true, repeat: 1});
-        triggerUIAffect(true);
-        
-        // 0.8초 후 스트림릿 페이지를 새로고침하며 인증 성공 값을 파라미터로 주입
-        setTimeout(() => {
-            window.parent.location.href = window.parent.location.pathname + "?auth=success";
-        }, 800);
-    }
-
-    function triggerUIAffect(isOn) {
-        const glowL = document.getElementById("leftGlow");
-        const glowR = document.getElementById("rightGlow");
-        const lightL = document.getElementById("lightL");
-        const lightR = document.getElementById("lightR");
-        const form = document.getElementById("loginForm");
-        const welcome = document.getElementById("welcomeText");
-        const btn = document.getElementById("loginBtn");
-        const hint = document.getElementById("clickHint");
-        
-        if (isOn) {
-            glowL.style.opacity = "1"; glowR.style.opacity = "1";
-            lightL.style.background = "#fbbf24"; lightL.style.boxShadow = "0 0 20px 5px rgba(251,191,36,0.8)";
-            lightR.style.background = "#fbbf24"; lightR.style.boxShadow = "0 0 20px 5px rgba(251,191,36,0.8)";
-            form.style.opacity = "1"; form.style.background = "rgba(255,255,255,0.06)"; form.style.border = "1px solid rgba(251,191,36,0.4)";
-            welcome.innerHTML = "✅ V2X 커넥티드 카 연동 완료"; welcome.style.color = "#fbbf24";
-            btn.innerHTML = "잠시 후 진단창이 활성화됩니다..."; btn.style.background = "linear-gradient(135deg, #fbbf24 0%, #d97706 100%)"; btn.style.color = "#000000";
-            hint.innerHTML = "🟢 시동 ON (연동 성공)"; hint.style.color = "#fbbf24";
-        }
-    }
-</script>
-""".replace("_ALREADY_AUTH_", "true" if st.session_state.car_authenticated else "false")
-
-# 오프닝 자동차 로그인 모듈 탑재
-components.html(car_lamp_html, height=180)
-
-# ==========================================
-# STEP 2. 조건부 화면 렌더링 (로그인 완료 시에만 다음 화면 오픈)
-# ==========================================
-if not st.session_state.car_authenticated:
-    # 로그인 전 화면 안내
-    st.warning("🔒 본 서비스는 무인 관제 연동형 플랫폼입니다. 상단의 차량을 클릭하여 V2X 시동 및 인증을 완료해 주세요.")
-else:
-    # 로그인 성공 후 열리는 다음 화면 구역
-    st.success("🔓 스마트 락 해제 성공! 자율주행 차량 외관 관제 시스템이 정상 활성화되었습니다.")
+    """
+    components.html(car_visual_html, height=160)
     
+    # 관제 시스템 로그인 카드 구역 (스트림릿 정석 컴포넌트 구성)
+    st.markdown("<h3 style='text-align: center; color: #1e293b; margin-top:10px;'>🔒 자율주행 V2X 관제 시스템 인증</h3>", unsafe_allow_html=True)
+    st.write("본 서비스는 무인 관제 연동형 플랫폼입니다. 아래 인증 버튼을 눌러 스마트 락 해제 및 시동을 켜주세요.")
+    
+    # 가짜 ID 입력창 (입력된 것처럼 연출)
+    st.text_input("Connected Car ID", value="Future_Auto_SeungTae", disabled=True)
+    
+    # ★ 클릭 시 100% 다음 페이지로 넘어가는 스트림릿 정석 안전 버튼
+    if st.button("🚀 차량 시동 및 스마트 검수 모드 활성화"):
+        st.session_state.car_authenticated = True
+        st.rerun() # 화면을 즉시 새로고침하여 다음 화면으로 전환
+
+
+# ==========================================
+# [화면 2] 시동 완료 후 열리는 진짜 차량 진단 화면
+# ==========================================
+else:
+    # 성공 메시지 상단 배치
+    st.success("🔓 스마트 락 해제 성공! 헤드라이트가 켜졌으며, 외관 관제 시스템이 정상 활성화되었습니다.")
+    
+    # 인증 완료된 활성화 헤드라이트 비주얼 (HTML/CSS)
+    car_active_html = """
+    <div style="font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; background-color: #0f1115; padding: 30px 25px; border-radius: 16px; box-shadow: inset 0 0 20px rgba(0,0,0,0.6); margin-bottom: 10px;">
+        <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; width: 160px; height: 100px;">
+            <div style="position: absolute; top: 20px; left: -140px; width: 180px; height: 100px; background: radial-gradient(ellipse at right, rgba(251,191,36,0.35) 0%, rgba(251,191,36,0) 80%); opacity: 1; filter: blur(4px);"></div>
+            <div style="position: absolute; top: 20px; right: -140px; width: 180px; height: 100px; background: radial-gradient(ellipse at left, rgba(251,191,36,0.35) 0%, rgba(251,191,36,0) 80%); opacity: 1; filter: blur(4px);"></div>
+            
+            <div style="position: relative; width: 140px; height: 55px; background: linear-gradient(180deg, #334155 0%, #1e293b 100%); border-radius: 20px 20px 12px 12px; border: 1px solid #fbbf24; box-shadow: 0 0 15px rgba(251,191,36,0.2);">
+                <div style="width: 100px; height: 18px; background: #0f172a; margin: 6px auto 0 auto; border-radius: 8px 8px 3px 3px; opacity: 0.8;"></div>
+                <div style="position: absolute; bottom: 12px; left: 12px; width: 22px; height: 8px; background: #fbbf24; border-radius: 2px 6px 3px 3px; box-shadow: 0 0 20px 5px rgba(251,191,36,0.8);"></div>
+                <div style="position: absolute; bottom: 12px; right: 12px; width: 22px; height: 8px; background: #fbbf24; border-radius: 6px 2px 3px 3px; box-shadow: 0 0 20px 5px rgba(251,191,36,0.8);"></div>
+                <div style="width: 50px; height: 4px; background: #1e293b; margin: 8px auto 0 auto; border-radius: 2px;"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; width: 110px; margin-top: -2px;">
+                <div style="width: 20px; height: 8px; background: #0f172a; border-radius: 2px;"></div>
+                <div style="width: 20px; height: 8px; background: #0f172a; border-radius: 2px;"></div>
+            </div>
+            <span style="color: #fbbf24; font-size: 10px; margin-top: 8px; font-weight: 600;">🟢 V2X CONNECTED ON</span>
+        </div>
+    </div>
+    """
+    components.html(car_active_html, height=150)
+
+    # 진짜 메인 화면 시작
     st.title("🚗 AI 이미지 인식 기반 자율주행 차량 외관 손상 자가 진단")
     st.caption("🏆 2026 미래자동차학과 캡스톤 디자인 우수 프로젝트 MVP")
     
@@ -248,17 +238,17 @@ else:
                         resultDiv.style.display = 'block';
                         const scorePercent = (highestProbability * 100).toFixed(1);
 
-                        if (highestClass.includes('파손') || highestClass.toLowerCase().includes('damage') || highestClass.toLowerCase().includes('scratch')) {
-                            resultDiv.style.backgroundColor = '#fef2f2';
-                            resultDiv.style.color = '#991b1b';
-                            resultDiv.style.border = '1px solid #fecaca';
-                            resultDiv.innerHTML = `<span style='font-size:17px;'>🚨 AI 분석 최종 결과: [${highestClass}] 상태 감지 (${scorePercent}%)</span>` + allResultsHTML;
-                        } else {
-                            resultDiv.style.backgroundColor = '#f0fff4';
-                            resultDiv.style.color = '#166534';
-                            resultDiv.style.border = '1px solid #bbf7d0';
-                            resultDiv.innerHTML = `<span style='font-size:17px;'>✅ AI 분석 최종 결과: [${highestClass}] 인증 완료 (${scorePercent}%)</span>` + allResultsHTML;
-                        }
+                    if (highestClass.includes('파손') || highestClass.toLowerCase().includes('damage') || highestClass.toLowerCase().includes('scratch')) {
+                        resultDiv.style.backgroundColor = '#fef2f2';
+                        resultDiv.style.color = '#991b1b';
+                        resultDiv.style.border = '1px solid #fecaca';
+                        resultDiv.innerHTML = `<span style='font-size:17px;'>🚨 AI 분석 최종 결과: [${highestClass}] 상태 감지 (${scorePercent}%)</span>` + allResultsHTML;
+                    } else {
+                        resultDiv.style.backgroundColor = '#f0fff4';
+                        resultDiv.style.color = '#166534';
+                        resultDiv.style.border = '1px solid #bbf7d0';
+                        resultDiv.innerHTML = `<span style='font-size:17px;'>✅ AI 분석 최종 결과: [${highestClass}] 인증 완료 (${scorePercent}%)</span>` + allResultsHTML;
+                    }
                     };
                 };
                 reader.readAsDataURL(file);
