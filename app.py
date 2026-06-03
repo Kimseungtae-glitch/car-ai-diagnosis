@@ -4,9 +4,18 @@ import os
 
 st.set_page_config(page_title="차량 외관 손상 자가 진단", layout="centered")
 
+# 상단 헤더 디자인 고도화
 st.title("🚗 AI 이미지 인식 기반 자율주행 차량 외관 손상 자가 진단 서비스")
-st.caption("Future Automotive Engineering - Capstone Project MVP")
-st.write("서버에 내장된 딥러닝 가중치를 활용하여 실시간으로 외관 상태를 정석 분석합니다.")
+st.caption("🏆 2026 미래자동차학과 캡스톤 디자인 우수 프로젝트 MVP")
+st.write("본 서비스는 카셰어링 이용자를 위한 무인 반납 및 외관 손상 실시간 정석 진단 플랫폼입니다.")
+
+# 1. 이용자를 위한 AI 촬영 가이드라인 추가 (시각적 완성도 업)
+st.info("""
+**📸 AI 진단 정확도를 높이는 촬영 가이드**
+* 차량의 정면/측면이 **수평**이 되도록 촬영해 주세요.
+* 야간이나 어두운 지하 주차장보다는 **밝은 조명 아래**가 가장 정확합니다.
+* 파손 부위가 잘 보이도록 **1m 내외의 적정 거리**에서 촬영해 주세요.
+""")
 
 # 서버 내 파일 존재 여부 확인
 required_files = ["model.json", "metadata.json", "weights.bin"]
@@ -15,7 +24,6 @@ missing_files = [f for f in required_files if not os.path.exists(f)]
 if missing_files:
     st.error(f"⚠️ 서버에 필수 AI 파일이 누락되었습니다: {', '.join(missing_files)}")
 else:
-    # 에러가 나지 않도록 f-string 포맷팅을 분리하여 안전하게 파일 주입
     with open("model.json", "r", encoding="utf-8") as f:
         model_json = f.read()
     with open("metadata.json", "r", encoding="utf-8") as f:
@@ -23,9 +31,8 @@ else:
     with open("weights.bin", "rb") as f:
         weights_bin = f.read().hex()
 
-    # 자바스크립트 중괄호 에러를 방지하기 위해 특수 처리된 HTML 스트링
     html_code = """
-    <div style="font-family: 'Malgun Gothic', sans-serif; padding: 20px; border: 2px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+    <div style="font-family: 'Malgun Gothic', sans-serif; padding: 20px; border: 2px solid #e2e8f0; border-radius: 12px; background-color: #ffffff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
         <h4 style="margin-top:0; color: #1a202c; font-size: 18px; border-bottom: 2px solid #edf2f7; padding-bottom: 10px;">🤖 AI 외관 손상 진단창 (정석 구동)</h4>
         
         <div style="margin-bottom: 20px;">
@@ -41,6 +48,14 @@ else:
             🔄 AI 딥러닝 모델 엔진 깨우는 중... 잠시만 기다려주세요.
         </div>
         <div id="result-container" style="display: none; padding: 18px; border-radius: 8px; font-weight: bold; font-size: 16px; line-height: 1.6;"></div>
+        
+        <div style="margin-top: 25px; padding-top: 15px; border-top: 1px solid #edf2f7; font-size: 13px; color: #718096;">
+            <strong>📞 진단 후 후속 조치 프로세스 안내</strong>
+            <div style="margin-top: 8px; display: flex; gap: 10px;">
+                <span style="background: #edf2f7; padding: 6px 12px; border-radius: 4px; font-weight: bold; color: #4a5568;">정상 판정 시 ➡️ 즉시 반납 완료</span>
+                <span style="background: #fff5f5; padding: 6px 12px; border-radius: 4px; font-weight: bold; color: #c53030;">파손 판정 시 ➡️ 사고 접수 센터 (1588-XXXX)</span>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
@@ -52,14 +67,12 @@ else:
         const imageSelector = document.getElementById('image-selector');
         const resultDiv = document.getElementById('result-container');
 
-        // 파이썬 영역에서 변환되어 주입되는 데이터 스트링 파싱
         const modelJsonData = _MODEL_JSON_;
         const metadataJsonData = _METADATA_JSON_;
         const weightsHex = "_WEIGHTS_BIN_";
 
         async function initAI() {
             try {
-                // hex 데이터를 다시 바이너리(ArrayBuffer)로 복원하여 브라우저 메모리에 탑재
                 const weightsBuffer = new Uint8Array(weightsHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16))).buffer;
 
                 model = await tmImage.loadFromFiles(
@@ -116,6 +129,7 @@ else:
                     }
                     allResultsHTML += "</div>";
 
+                    resultDiv.style.block = 'block';
                     resultDiv.style.display = 'block';
                     const scorePercent = (highestProbability * 100).toFixed(1);
 
@@ -137,9 +151,12 @@ else:
     </script>
     """
     
-    # 파이썬 데이터를 자바스크립트 위치에 안전하게 치환하여 문법 에러 원천 봉쇄
     html_code = html_code.replace("_MODEL_JSON_", model_json)
     html_code = html_code.replace("_METADATA_JSON_", metadata_json)
     html_code = html_code.replace("_WEIGHTS_BIN_", weights_bin)
     
-    components.html(html_code, height=650, scrolling=True)
+    components.html(html_code, height=720, scrolling=True)
+
+# 3. 맨 하단 공식 프로젝트 푸터(Footer) 추가
+st.markdown("---")
+st.caption("본 웹 서비스는 2026학년도 미래자동차학과 캡스톤 디자인 교과목 출품작이며, 기술 자문 및 공동 개발 파트너로 Gemini가 참여하였습니다. 무단 전재 및 배포를 금합니다.")
