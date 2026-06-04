@@ -5,11 +5,13 @@ import os
 # 페이지 설정
 st.set_page_config(page_title="차량 외관 손상 자가 진단", layout="centered")
 
-# 글로벌 CSS (스트림릿 기본 배경과 여백 정리)
+# 글로벌 CSS (스트림릿 기본 배경, 여백 및 버튼 스타일 디자인)
 st.markdown("""
     <style>
     .main .block-container { padding-top: 1rem; padding-bottom: 2rem; }
     h1 { color: #1e293b; font-weight: 800; letter-spacing: -0.05em; }
+    
+    /* 로그인 버튼 스타일링 */
     div.stButton > button {
         width: 100%;
         padding: 12px;
@@ -29,9 +31,11 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 스트림릿 자체 메모리에 로그인 상태 저장용 변수 초기화
+# 💡 스트림릿 메모리에 로그인 상태 및 '로그인 실패 횟수' 저장 변수 초기화
 if "car_authenticated" not in st.session_state:
     st.session_state.car_authenticated = False
+if "login_attempts" not in st.session_state:
+    st.session_state.login_attempts = 0
 
 
 # ==========================================
@@ -39,7 +43,7 @@ if "car_authenticated" not in st.session_state:
 # ==========================================
 if not st.session_state.car_authenticated:
     
-    # 세련된 미래형 자동차 전면부 디자인 비주얼 (HTML/CSS)
+    # 세련된 미래형 자동차 전면부 디자인 (헤드라이트 꺼진 대기 상태)
     car_visual_html = """
     <div style="font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; background-color: #0f1115; padding: 40px 25px; border-radius: 16px; box-shadow: inset 0 0 20px rgba(0,0,0,0.6); margin-bottom: 10px;">
         <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; width: 160px; height: 100px;">
@@ -58,27 +62,56 @@ if not st.session_state.car_authenticated:
     """
     components.html(car_visual_html, height=160)
     
-    # 관제 시스템 로그인 카드 구역 (스트림릿 정석 컴포넌트 구성)
     st.markdown("<h3 style='text-align: center; color: #1e293b; margin-top:10px;'>🔒 자율주행 V2X 관제 시스템 인증</h3>", unsafe_allow_html=True)
-    st.write("본 서비스는 무인 관제 연동형 플랫폼입니다. 아래 인증 버튼을 눌러 스마트 락 해제 및 시동을 켜주세요.")
+    st.caption("<p style='text-align: center;'>본 서비스는 무인 관제 연동형 플랫폼입니다. 차량 ID와 패스워드를 입력해 주세요.</p>", unsafe_allow_html=True)
     
-    # 가짜 ID 입력창 (입력된 것처럼 연출)
-    st.text_input("Connected Car ID", value="Future_Auto_SeungTae", disabled=True)
+    # 💡 5번 이상 틀렸는지 확인하여 입력창 차단 여부 결정
+    is_locked = st.session_state.login_attempts >= 5
     
-    # ★ 클릭 시 100% 다음 페이지로 넘어가는 스트림릿 정석 안전 버튼
-    if st.button("🚀 차량 시동 및 스마트 검수 모드 활성화"):
-        st.session_state.car_authenticated = True
-        st.rerun() # 화면을 즉시 새로고침하여 다음 화면으로 전환
+    # 5번 이상 틀리면 입력창이 잠김(disabled=True) 상태가 됩니다.
+    user_id = st.text_input("Connected Car ID", placeholder="아이디를 입력하세요 (시연용: seungtae)", disabled=is_locked)
+    user_pw = st.text_input("Access Password", type="password", placeholder="비밀번호를 입력하세요 (시연용: 1234)", disabled=is_locked)
+    
+    # 현재 로그인 실패 횟수 실시간 표시 (1번 이상 틀렸을 때만 안내)
+    if 0 < st.session_state.login_attempts < 5:
+        st.warning(f"⚠️ 인증 실패 경고: 현재 연속 {st.session_state.login_attempts}/5회 실패했습니다. 5회 실패 시 시스템이 잠깁니다.")
+    
+    # 💡 [핵심] 5번 이상 틀렸을 때 표출되는 문구 및 로직
+    if is_locked:
+        st.error("""
+        ### 🚨 관제 시스템 긴급 보안 위반 경고 (Access Denied)
+        * **사유:** V2X 인증 패스워드 5회 연속 오류 초과
+        * **조치:** 외부 무단 해킹 시도로 간주되어 해당 커넥티드 카 단말기의 접근 권한이 **일시적으로 완전 차단(Lock)** 되었습니다.
+        * **해제 방법:** 관리자 관제 센터에 문의하여 모바일 보안 서명(OTP) 인증을 다시 수행해 주십시오.
+        """)
+        
+        # 잠금 해제용 시연 치트키 버튼 (발표 중 실수로 잠겼을 때를 대비한 리셋 버튼)
+        if st.button("🔄 시연용 잠금 리셋 (발표자 초기화 툴)"):
+            st.session_state.login_attempts = 0
+            st.rerun()
+            
+    else:
+        # 5번 미만일 때만 활성화되는 로그인 버튼
+        if st.button("🚀 관제 시스템 시동 및 스마트 검수 모드 활성화"):
+            if user_id == "seungtae" and user_pw == "1234":
+                st.session_state.car_authenticated = True
+                st.session_state.login_attempts = 0 # 성공 시 카운트 초기화
+                st.rerun()
+            elif user_id == "" or user_pw == "":
+                st.warning("⚠️ 아이디와 비밀번호를 모두 입력해 주세요.")
+            else:
+                st.session_state.login_attempts += 1 # 틀릴 때마다 카운트 1 증가
+                st.rerun()
 
 
 # ==========================================
-# [화면 2] 시동 완료 후 열리는 진짜 차량 진단 화면
+# [화면 2] 로그인 성공 후 열리는 진짜 차량 진단 화면
 # ==========================================
 else:
     # 성공 메시지 상단 배치
-    st.success("🔓 스마트 락 해제 성공! 헤드라이트가 켜졌으며, 외관 관제 시스템이 정상 활성화되었습니다.")
+    st.success("🔓 스마트 락 해제 성공! 헤드라이트가 활성화되었으며 외관 관제 시스템이 정상 작동합니다.")
     
-    # 인증 완료된 활성화 헤드라이트 비주얼 (HTML/CSS)
+    # 인증 완료된 활성화 헤드라이트 비주얼 (노란 불빛 뿜어내는 디자인)
     car_active_html = """
     <div style="font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; background-color: #0f1115; padding: 30px 25px; border-radius: 16px; box-shadow: inset 0 0 20px rgba(0,0,0,0.6); margin-bottom: 10px;">
         <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; width: 160px; height: 100px;">
@@ -238,17 +271,17 @@ else:
                         resultDiv.style.display = 'block';
                         const scorePercent = (highestProbability * 100).toFixed(1);
 
-                    if (highestClass.includes('파손') || highestClass.toLowerCase().includes('damage') || highestClass.toLowerCase().includes('scratch')) {
-                        resultDiv.style.backgroundColor = '#fef2f2';
-                        resultDiv.style.color = '#991b1b';
-                        resultDiv.style.border = '1px solid #fecaca';
-                        resultDiv.innerHTML = `<span style='font-size:17px;'>🚨 AI 분석 최종 결과: [${highestClass}] 상태 감지 (${scorePercent}%)</span>` + allResultsHTML;
-                    } else {
-                        resultDiv.style.backgroundColor = '#f0fff4';
-                        resultDiv.style.color = '#166534';
-                        resultDiv.style.border = '1px solid #bbf7d0';
-                        resultDiv.innerHTML = `<span style='font-size:17px;'>✅ AI 분석 최종 결과: [${highestClass}] 인증 완료 (${scorePercent}%)</span>` + allResultsHTML;
-                    }
+                        if (highestClass.includes('파손') || highestClass.toLowerCase().includes('damage') || highestClass.toLowerCase().includes('scratch')) {
+                            resultDiv.style.backgroundColor = '#fef2f2';
+                            resultDiv.style.color = '#991b1b';
+                            resultDiv.style.border = '1px solid #fecaca';
+                            resultDiv.innerHTML = `<span style='font-size:17px;'>🚨 AI 분석 최종 결과: [${highestClass}] 상태 감지 (${scorePercent}%)</span>` + allResultsHTML;
+                        } else {
+                            resultDiv.style.backgroundColor = '#f0fff4';
+                            resultDiv.style.color = '#166534';
+                            resultDiv.style.border = '1px solid #bbf7d0';
+                            resultDiv.innerHTML = `<span style='font-size:17px;'>✅ AI 분석 최종 결과: [${highestClass}] 인증 완료 (${scorePercent}%)</span>` + allResultsHTML;
+                        }
                     };
                 };
                 reader.readAsDataURL(file);
