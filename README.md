@@ -4,6 +4,11 @@
 
 <br>
 
+## 🌐 라이브러리 및 배포 링크 (Deployment Link)
+* **🚀 실시간 구동 앱 주소:** [https://car-ai-diagnosis-kfvs9gcyxjgtsocrni6fmy.streamlit.app](https://car-ai-diagnosis-kfvs9gcyxjgtsocrni6fmy.streamlit.app)
+
+<br>
+
 ## 📌 프로젝트 개요 (Project Overview)
 본 프로젝트는 무인 카셰어링 서비스 및 미래 자율주행 차량 관제 환경에서 대여 전후의 차량 외관 상태를 사용자가 스스로 진단하고, 이를 **V2X(Vehicle-to-Everything)** 관제 서버와 연동하여 무인 반납 프로세스를 자동화하는 **인공지능 기반 통합 검수 플랫폼 프로토타입(MVP)**입니다.
 
@@ -45,5 +50,5 @@
 ## 🏃‍♂️ 실행 방법 (How to Run)
 
 1. **필수 라이브러리 설치:**
-   ```bash
+```bash
    pip install streamlit
