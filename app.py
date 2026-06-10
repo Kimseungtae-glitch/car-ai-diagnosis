@@ -165,7 +165,7 @@ else:
             
             <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 20px;">
                 <h4 style="margin: 0; color: #0f172a; font-size: 19px; font-weight: 700;">🤖 AI 외관 손상 진단창</h4>
-                <span style="font-size: 11px; background: #e2e8f0; color: #475569; padding: 3px 8px; border-radius: 20px; font-weight: 600;">v1.2 현대차 연동</span>
+                <span style="font-size: 11px; background: #e2e8f0; color: #475569; padding: 3px 8px; border-radius: 20px; font-weight: 600;">v1.3 무인 제어 연동</span>
             </div>
             
             <div style="margin-bottom: 20px; background-color: #f8fafc; padding: 15px; border-radius: 10px; border: 1px solid #edf2f7;">
@@ -188,8 +188,7 @@ else:
             <div style="margin-top: 25px; padding-top: 18px; border-top: 1px solid #f1f5f9; font-size: 13px; color: #64748b;">
                 <strong style="color: #334155;">📞 관제 시스템 후속 조치 프로세스</strong>
                 <div style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px;">
-                    <span style="background: #f1f5f9; padding: 6px 12px; border-radius: 6px; font-weight: 600; color: #334155; border: 1px solid #e2e8f0;">✅ 정상: 즉시 반납 승인</span>
-                    <!-- 💡 요구사항 반영: '사고센터 자동접수' ➡️ '사고센터 접수'로 문구 변경 -->
+                    <span style="background: #f0fff4; padding: 6px 12px; border-radius: 6px; font-weight: 600; color: #166534; border: 1px solid #bbf7d0;">✅ 정상: 즉시 반납/탑승 승인</span>
                     <span style="background: #fef2f2; padding: 6px 12px; border-radius: 6px; font-weight: 600; color: #991b1b; border: 1px solid #fee2e2;">🚨 파손: 사고센터 접수</span>
                 </div>
             </div>
@@ -233,6 +232,11 @@ else:
             
             initAI();
 
+            // 💡 정상일 때 버튼 클릭 이벤트 함수
+            window.triggerCarOpen = function() {
+                alert("🔑 [V2X 인프라 연동 알림]\\n\\n디지털 스마트키가 고객님의 모바일 디바이스로 성공적으로 발급되었습니다!\\n차량의 도어 락이 해제되었으니 안전하게 탑승해 주십시오.");
+            };
+
             imageSelector.addEventListener('change', function(event) {
                 const file = event.target.files[0];
                 if (!file) return;
@@ -272,13 +276,12 @@ else:
                         resultDiv.style.display = 'block';
                         const scorePercent = (highestProbability * 100).toFixed(1);
 
-                        // 💡 파손 상태 감지 시 하이퍼링크 버튼 추가 연동 로직
+                        // [분기 1] 파손 상태 감지 시
                         if (highestClass.includes('파손') || highestClass.toLowerCase().includes('damage') || highestClass.toLowerCase().includes('scratch')) {
                             resultDiv.style.backgroundColor = '#fef2f2';
                             resultDiv.style.color = '#991b1b';
                             resultDiv.style.border = '1px solid #fecaca';
                             
-                            // 결과창 텍스트 내에 세련된 현대차 서비스 네트워크 전용 '사고센터 접수' 연동 버튼 배치
                             resultDiv.innerHTML = `
                                 <span style='font-size:17px;'>🚨 AI 분석 최종 결과: [${highestClass}] 상태 감지 (${scorePercent}%)</span>
                                 <div style="margin-top: 15px; margin-bottom: 5px;">
@@ -287,11 +290,22 @@ else:
                                     </a>
                                 </div>
                             ` + allResultsHTML;
+                        
+                        // 💡 [분기 2] 정상 상태 감지 시 (요구사항 추가)
                         } else {
                             resultDiv.style.backgroundColor = '#f0fff4';
                             resultDiv.style.color = '#166534';
                             resultDiv.style.border = '1px solid #bbf7d0';
-                            resultDiv.innerHTML = `<span style='font-size:17px;'>✅ AI 분석 최종 결과: [${highestClass}] 인증 완료 (${scorePercent}%)</span>` + allResultsHTML;
+                            
+                            // 결과창 텍스트 내에 세련된 초록색 '디지털 키 발급' 시뮬레이션 버튼 배치
+                            resultDiv.innerHTML = `
+                                <span style='font-size:17px;'>✅ AI 분석 최종 결과: [${highestClass}] 상태 완료 (${scorePercent}%)</span>
+                                <div style="margin-top: 15px; margin-bottom: 5px;">
+                                    <button onclick="window.triggerCarOpen()" style="display: inline-block; padding: 10px 18px; font-size: 13px; font-weight: bold; color: #ffffff; background-color: #166534; border: none; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.15); cursor: pointer; transition: 0.2s;">
+                                        🔑 디지털 스마트키 활성화 (차량 도어 열기) ➡️
+                                    </button>
+                                </div>
+                            ` + allResultsHTML;
                         }
                     };
                 };
@@ -307,7 +321,5 @@ else:
         components.html(html_code, height=780, scrolling=True)
 
     # 맨 하단 푸터
-    st.markdown("---")
-    st.caption("본 웹 서비스는 2026학년도 미래자동차학과 캡스톤 디자인 교과목 출품작이며, 기술 자문 및 공동 개발 파트너로 Gemini가 참여하였습니다. 무단 전재 및 배포를 금합니다.")
     st.markdown("---")
     st.caption("본 웹 서비스는 2026학년도 미래자동차학과 캡스톤 디자인 교과목 출품작이며, 기술 자문 및 공동 개발 파트너로 Gemini가 참여하였습니다. 무단 전재 및 배포를 금합니다.")
