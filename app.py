@@ -76,16 +76,16 @@ if not st.session_state.car_authenticated:
     if 0 < st.session_state.login_attempts < 5:
         st.warning(f"⚠️ 인증 실패 경고: 현재 연속 {st.session_state.login_attempts}/5회 실패했습니다. 5회 실패 시 시스템이 잠깁니다.")
     
-    # 💡 [핵심] 5번 이상 틀렸을 때 표출되는 문구 및 로직
+    # 💡 5번 이상 틀렸을 때 표출되는 문구 및 로직
     if is_locked:
         st.error("""
         ### 🚨 관제 시스템 긴급 보안 위반 경고 (Access Denied)
         * **사유:** V2X 인증 패스워드 5회 연속 오류 초과
-        * **조치:** 외부 무단 해킹 시도로 간주되어 해당 커넥티드 카 단말기의 접근 권한이 **일시적으로 완전 차단(Lock)** 되었습니다.
+        * **조치:** 외부 무단 해킹 시도로 간주되어 해당 커넥티드 카 단말기의 접근 권한이 **일시적으로 완전 차단(Lock)** 되었음을 안내해 드립니다.
         * **해제 방법:** 관리자 관제 센터에 문의하여 모바일 보안 서명(OTP) 인증을 다시 수행해 주십시오.
         """)
         
-        # 잠금 해제용 시연 치트키 버튼 (발표 중 실수로 잠겼을 때를 대비한 리셋 버튼)
+        # 잠금 해제용 시연 치트키 버튼
         if st.button("🔄 시연용 잠금 리셋 (발표자 초기화 툴)"):
             st.session_state.login_attempts = 0
             st.rerun()
@@ -165,7 +165,7 @@ else:
             
             <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 20px;">
                 <h4 style="margin: 0; color: #0f172a; font-size: 19px; font-weight: 700;">🤖 AI 외관 손상 진단창</h4>
-                <span style="font-size: 11px; background: #e2e8f0; color: #475569; padding: 3px 8px; border-radius: 20px; font-weight: 600;">v1.0 정석 구동</span>
+                <span style="font-size: 11px; background: #e2e8f0; color: #475569; padding: 3px 8px; border-radius: 20px; font-weight: 600;">v1.2 현대차 연동</span>
             </div>
             
             <div style="margin-bottom: 20px; background-color: #f8fafc; padding: 15px; border-radius: 10px; border: 1px solid #edf2f7;">
@@ -189,7 +189,8 @@ else:
                 <strong style="color: #334155;">📞 관제 시스템 후속 조치 프로세스</strong>
                 <div style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px;">
                     <span style="background: #f1f5f9; padding: 6px 12px; border-radius: 6px; font-weight: 600; color: #334155; border: 1px solid #e2e8f0;">✅ 정상: 즉시 반납 승인</span>
-                    <span style="background: #fef2f2; padding: 6px 12px; border-radius: 6px; font-weight: 600; color: #991b1b; border: 1px solid #fee2e2;">🚨 파손: 사고 센터 자동 접수</span>
+                    <!-- 💡 요구사항 반영: '사고센터 자동접수' ➡️ '사고센터 접수'로 문구 변경 -->
+                    <span style="background: #fef2f2; padding: 6px 12px; border-radius: 6px; font-weight: 600; color: #991b1b; border: 1px solid #fee2e2;">🚨 파손: 사고센터 접수</span>
                 </div>
             </div>
         </div>
@@ -218,7 +219,7 @@ else:
                     );
                     
                     maxPredictions = model.getTotalClasses();
-                    statusMsg.innerHTML = "🚀 AI 정석 모델 로딩 완료! 진짜 딥러닝 연산이 가능합니다.";
+                    statusMsg.innerHTML = "🚀 AI 모델 엔진 활성화 완료! 정석 분석 모드가 준비되었습니다.";
                     statusMsg.style.backgroundColor = "#f0fff4";
                     statusMsg.style.color = "#166534";
                     statusMsg.style.borderColor = "#bbf7d0";
@@ -243,7 +244,7 @@ else:
                     img.style.display = 'block';
                     
                     statusMsg.style.display = 'block';
-                    statusMsg.innerHTML = "⚡ 진짜 AI 모델이 픽셀 패턴을 분석하는 중입니다...";
+                    statusMsg.innerHTML = "⚡ AI 모델이 픽셀 패턴을 분석하는 중입니다...";
                     statusMsg.style.backgroundColor = "#fffbeb";
                     statusMsg.style.color = "#92400e";
                     statusMsg.style.borderColor = "#fef3c7";
@@ -271,11 +272,21 @@ else:
                         resultDiv.style.display = 'block';
                         const scorePercent = (highestProbability * 100).toFixed(1);
 
+                        // 💡 파손 상태 감지 시 하이퍼링크 버튼 추가 연동 로직
                         if (highestClass.includes('파손') || highestClass.toLowerCase().includes('damage') || highestClass.toLowerCase().includes('scratch')) {
                             resultDiv.style.backgroundColor = '#fef2f2';
                             resultDiv.style.color = '#991b1b';
                             resultDiv.style.border = '1px solid #fecaca';
-                            resultDiv.innerHTML = `<span style='font-size:17px;'>🚨 AI 분석 최종 결과: [${highestClass}] 상태 감지 (${scorePercent}%)</span>` + allResultsHTML;
+                            
+                            // 결과창 텍스트 내에 세련된 현대차 서비스 네트워크 전용 '사고센터 접수' 연동 버튼 배치
+                            resultDiv.innerHTML = `
+                                <span style='font-size:17px;'>🚨 AI 분석 최종 결과: [${highestClass}] 상태 감지 (${scorePercent}%)</span>
+                                <div style="margin-top: 15px; margin-bottom: 5px;">
+                                    <a href="https://www.hyundai.com/kr/ko/service-membership/service-network/service-reservation-search" target="_blank" style="display: inline-block; padding: 10px 18px; font-size: 13px; font-weight: bold; color: #ffffff; background-color: #002c5f; text-decoration: none; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.15); transition: 0.2s;">
+                                        🛠️ 현대자동차 사고센터 접수 및 서비스 예약하기 ➡️
+                                    </a>
+                                </div>
+                            ` + allResultsHTML;
                         } else {
                             resultDiv.style.backgroundColor = '#f0fff4';
                             resultDiv.style.color = '#166534';
@@ -293,8 +304,10 @@ else:
         html_code = html_code.replace("_METADATA_JSON_", metadata_json)
         html_code = html_code.replace("_WEIGHTS_BIN_", weights_bin)
         
-        components.html(html_code, height=750, scrolling=True)
+        components.html(html_code, height=780, scrolling=True)
 
     # 맨 하단 푸터
+    st.markdown("---")
+    st.caption("본 웹 서비스는 2026학년도 미래자동차학과 캡스톤 디자인 교과목 출품작이며, 기술 자문 및 공동 개발 파트너로 Gemini가 참여하였습니다. 무단 전재 및 배포를 금합니다.")
     st.markdown("---")
     st.caption("본 웹 서비스는 2026학년도 미래자동차학과 캡스톤 디자인 교과목 출품작이며, 기술 자문 및 공동 개발 파트너로 Gemini가 참여하였습니다. 무단 전재 및 배포를 금합니다.")
