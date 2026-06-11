@@ -8,6 +8,14 @@
 본 프로젝트는 무인 카셰어링 서비스 및 미래 자율주행 차량 관제 환경에서 대여 전후의 차량 외관 상태를 사용자가 스스로 진단하고, 이를 **V2X(Vehicle-to-Everything)** 관제 서버와 연동하여 무인 반납 및 사후 관리 프로세스를 자동화하는 **인공지능 기반 통합 검수 플랫폼 프로토타입(MVP)**입니다.
 
 <br>
+🌐 서비스 접속 주소 (Live Demo)
+본 서비스는 스트림릿 클라우드(Streamlit Cloud)를 통해 전 세계 어디서나 접속 가능한 퍼블릭 환경에 배포되어 있습니다.
+
+웹 서비스 URL: https://car-ai-diagnosis-kfvs9gcyxjgtsocrni6fmy.streamlit.app/
+
+시연용 테스트 계정: ID: seungtae / PW: 1234
+
+<br>
 
 ## 🛠️ 기술 스택 (Tech Stacks)
 깃허브와 스트림릿 환경에 최적화된 경량화 웹 및 AI 기술 스택을 활용하여 기동성 있는 MVP를 구축했습니다.
